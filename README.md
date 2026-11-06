@@ -139,7 +139,7 @@ Validation follows the Agent Plugins 1.0.0 loading rules and failure boundaries 
 - legacy `sse` transports are valid but unsupported and are skipped with a warning;
 - commands are one token, bare or `./`-relative, with no variables.
 
-The test suite (183 tests) includes fixtures modelled on real-world packages, symlink-escape cases for every path boundary (`plugin.json`, `skills/`, `SKILL.md`, `mcp.json`, `./` commands, `cwd`), marketplace install/update/uninstall lifecycles, npm resolution, the v1 skill farm and both adapters. A live smoke test (`bun run smoke`) verifies skill registration and the MCP `disabled` status against a real OpenCode 2.2.5 instance in an isolated HOME.
+The test suite includes fixtures modelled on real-world packages, symlink-escape cases for every path boundary (`plugin.json`, `skills/`, `SKILL.md`, `mcp.json`, `./` commands, `cwd`), marketplace install/update/uninstall lifecycles, npm resolution, the v1 skill farm and both adapters. A live smoke test (`bun run smoke`) verifies skill registration and the MCP `disabled` status against a real OpenCode 2.2.5 instance in an isolated HOME.
 
 ## V1 / V2 matrix
 
@@ -152,6 +152,26 @@ The test suite (183 tests) includes fixtures modelled on real-world packages, sy
 | Marketplace install | ✅ | ❌ (no command API) |
 | npm package sources | ✅ | ✅ (`AGENT_PLUGINS_PACKAGES`) |
 | Plugin options | ✅ object options | ✅ environment variables |
+
+## Scope
+
+This client implements the **portable core** of the spec. Two things stay
+deliberately out of scope:
+
+- `ai.opencode/` — the client-specific extension namespace (JS entry, agents,
+  commands, modes, hooks). A package that ships it still contributes its skills
+  and MCP servers; discovery reports one warning naming the components it did
+  not load, so nothing disappears silently.
+- `agent-plugins/` inside OpenCode config directories and plugin-source
+  registration. The client scans the shared roots (`.agents/plugins`) and
+  accepts any additional root through `directories`; scanning OpenCode's own
+  config directories by default is a core decision. Registering a plugin
+  source is not possible from a plugin at all: the v2 API can list plugins
+  (`ctx.plugin.list()`) but cannot add one.
+
+User configuration and earlier registrations win every collision, so if core
+ever provides the same skill or MCP server this client steps aside per entry
+instead of double-registering it.
 
 ## Related work
 

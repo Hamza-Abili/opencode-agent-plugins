@@ -7,10 +7,9 @@
  * filesystem kind disables only the skills component.
  */
 
-import fs from "node:fs";
 import path from "node:path";
 import { parseSkillFile } from "./frontmatter.ts";
-import { listEntries, readText, resolvedInside } from "./fs.ts";
+import { listEntries, lstatOrNull, readText, resolvedInside } from "./fs.ts";
 import type { AgentSkill, Problem } from "./types.ts";
 
 export function discoverSkills(root: string): { skills: AgentSkill[]; problems: Problem[] } {
@@ -80,21 +79,8 @@ export function discoverSkills(root: string): { skills: AgentSkill[]; problems: 
   return { skills, problems };
 }
 
-function lstatOrNull(p: string): fs.Stats | null {
-  try {
-    return fs.lstatSync(p);
-  } catch {
-    return null;
-  }
-}
-
 function pathExistsSymlinkTarget(p: string): boolean {
   // `resolvedInside` returns null both for missing entries and for escaping
   // entries; distinguish them so a missing `skills/` stays silent.
-  try {
-    fs.lstatSync(p);
-    return true;
-  } catch {
-    return false;
-  }
+  return lstatOrNull(p) !== null;
 }

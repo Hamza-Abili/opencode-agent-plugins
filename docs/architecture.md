@@ -12,7 +12,7 @@ src/
 ├── manifest.ts         plugin.json validation (1.0.0 rules in code)
 ├── skills.ts           skills/ discovery and per-skill failure isolation
 ├── mcp.ts              mcp.json validation + mapping (containment, variables)
-├── discovery.ts        directory scanning, plugin loading, direct roots
+├── discovery.ts        scanning, plugin loading, client-extension diagnostics
 ├── options.ts          v2 object options / v1 environment options
 ├── packages.ts         npm package resolution (project node_modules, cache)
 ├── marketplace/        catalog parse, managed store, install/update
@@ -54,6 +54,10 @@ a disable wins. Aliases that resolve to more than one server fail closed.
    removed at startup.
 7. **No runtime dependencies.** The published package imports only Node/Bun
    built-ins and host-resolved module specifiers.
+8. **Client extensions are reported, never executed.** `ai.opencode/` is not
+   loaded: a package that ships it still contributes its portable components
+   and gets one warning naming what was left behind, and the namespace is
+   contained like every other package path before it is listed.
 
 ## Testing
 

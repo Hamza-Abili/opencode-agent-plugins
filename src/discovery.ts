@@ -5,12 +5,21 @@
  * discovers them in the directories handed to it, validates each one, and
  * returns the portable pieces (manifest, skills, MCP servers) plus every
  * non-fatal finding. Directories are scanned one level deep; each directory
- * without a plugin.json is simply not a plugin.
+ * without a plugin.json is simply not a plugin. Client-specific extension
+ * namespaces are not loaded: a package that ships one still contributes its
+ * portable components and is reported once for what was left behind.
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { listEntries, pathExists, readJSON, realpathOrNull } from "./fs.ts";
+import {
+  listEntries,
+  lstatOrNull,
+  pathExists,
+  readJSON,
+  realpathOrNull,
+  resolvedInside,
+} from "./fs.ts";
 import { manifestEscapesRoot, validateManifest } from "./manifest.ts";
 import { parseMcp } from "./mcp.ts";
 import { discoverSkills } from "./skills.ts";
@@ -124,6 +133,58 @@ export function discoverPlugins(directories: string[]): DiscoveryResult {
 
 type PluginLoadResult = { loaded?: DiscoveredPlugin; problems: Problem[] };
 
+/**
+ * Client-specific extension namespace reserved for OpenCode. The spec lets a
+ * package carry per-client behavior here; this client implements the portable
+ * core only, so those components are reported once instead of vanishing.
+ */
+const EXTENSION_NAMESPACE = "ai.opencode";
+const EXTENSION_COMPONENTS = new Set([
+  "plugin.ts",
+  "plugin.js",
+  "agents",
+  "commands",
+  "modes",
+  "hooks",
+]);
+
+function detectUnloadedExtensions(root: string, problems: Problem[]): void {
+  const namespaceDir = path.join(root, EXTENSION_NAMESPACE);
+  if (lstatOrNull(namespaceDir) === null) return;
+
+  // Names only: the namespace must resolve to a directory inside the root
+  // before it is listed, exactly like every other package path.
+  const realNamespace = resolvedInside(namespaceDir, root);
+  if (realNamespace === null) {
+    problems.push({
+      level: "warning",
+      message: `${EXTENSION_NAMESPACE} entry is not a directory inside the plugin root — client extensions ignored`,
+    });
+    return;
+  }
+  const namespaceStat = statSyncOrNull(realNamespace);
+  if (namespaceStat === null || !namespaceStat.isDirectory()) return;
+
+  const entries = listEntries(realNamespace);
+  if (entries === null) {
+    problems.push({
+      level: "warning",
+      message: `cannot read ${EXTENSION_NAMESPACE}/ — client extensions ignored`,
+    });
+    return;
+  }
+  const present = entries
+    .map((entry) => entry.name)
+    .filter((name) => EXTENSION_COMPONENTS.has(name))
+    .sort();
+  if (present.length === 0) return;
+
+  problems.push({
+    level: "warning",
+    message: `${EXTENSION_NAMESPACE}/ ships ${present.join(", ")} — this client loads skills and MCP servers only (see anomalyco/opencode#40993)`,
+  });
+}
+
 function discoverPlugin(root: string): PluginLoadResult | null {
   const manifestFile = path.join(root, "plugin.json");
   const problems: Problem[] = [];
@@ -158,6 +219,8 @@ function discoverPlugin(root: string): PluginLoadResult | null {
 
   const mcpResult = parseMcp(root);
   problems.push(...mcpResult.problems);
+
+  detectUnloadedExtensions(root, problems);
 
   const manifest: PluginManifest = validated.manifest;
   return {

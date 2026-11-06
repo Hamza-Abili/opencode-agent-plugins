@@ -152,6 +152,101 @@ describe("findWorktreeRoot", () => {
   });
 });
 
+describe("discovery — client extension namespace", () => {
+  function writePackage(name: string): string {
+    const dir = makeTempDir();
+    writeFile(
+      path.join(dir, "plugin", "plugin.json"),
+      JSON.stringify({ $schema: PLUGIN_SCHEMA, name })
+    );
+    return dir;
+  }
+
+  test("reports ai.opencode components it does not load, and still loads the portable half", () => {
+    const dir = writePackage("with-extensions");
+    writeFile(
+      path.join(dir, "plugin", "skills", "greet", "SKILL.md"),
+      "---\nname: greet\ndescription: Greets\n---\nHi\n"
+    );
+    writeFile(path.join(dir, "plugin", "ai.opencode", "plugin.ts"), "export default {}");
+    writeFile(path.join(dir, "plugin", "ai.opencode", "agents", "reviewer.md"), "# reviewer");
+
+    const result = discoverPlugins([dir]);
+    const plugin = result.plugins[0];
+    expect(plugin?.skills.map((skill) => skill.name)).toEqual(["greet"]);
+    const warning = plugin?.problems.find((p) => p.message.includes("ai.opencode"));
+    expect(warning?.level).toBe("warning");
+    expect(warning?.message).toContain("agents, plugin.ts");
+    expect(warning?.message).toContain("#40993");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("stays silent for an empty namespace or unrelated files", () => {
+    const dir = writePackage("quiet-extensions");
+    fs.mkdirSync(path.join(dir, "plugin", "ai.opencode"), { recursive: true });
+    writeFile(path.join(dir, "plugin", "ai.opencode", "README.md"), "client docs");
+
+    const result = discoverPlugins([dir]);
+    expect(result.plugins[0].problems.some((p) => p.message.includes("ai.opencode"))).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("never lists an ai.opencode namespace that escapes the plugin root", () => {
+    const dir = writePackage("escaping-extensions");
+    const outside = path.join(dir, "outside");
+    writeFile(path.join(outside, "agents", "secret-component.md"), "# outside");
+    fs.symlinkSync(outside, path.join(dir, "plugin", "ai.opencode"), "dir");
+
+    const result = discoverPlugins([dir]);
+    const messages = result.plugins[0].problems.map((problem) => problem.message);
+    expect(messages).toContain(
+      "ai.opencode entry is not a directory inside the plugin root — client extensions ignored"
+    );
+    expect(messages.join("\n")).not.toContain("ships");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("ignores a plain file named ai.opencode", () => {
+    const dir = writePackage("not-a-namespace");
+    writeFile(path.join(dir, "plugin", "ai.opencode"), "not a directory");
+
+    const result = discoverPlugins([dir]);
+    expect(result.plugins[0].problems.some((p) => p.message.includes("ai.opencode"))).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("reports a dangling ai.opencode symlink instead of reading it", () => {
+    const dir = writePackage("dangling-namespace");
+    fs.symlinkSync(path.join(dir, "missing"), path.join(dir, "plugin", "ai.opencode"), "dir");
+
+    const result = discoverPlugins([dir]);
+    const messages = result.plugins[0].problems.map((problem) => problem.message);
+    expect(messages).toContain(
+      "ai.opencode entry is not a directory inside the plugin root — client extensions ignored"
+    );
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("reports an unreadable ai.opencode namespace", () => {
+    // Root can readdir a 000 directory, so the branch is unreachable there.
+    if (typeof process.getuid === "function" && process.getuid() === 0) return;
+    const dir = writePackage("unreadable-namespace");
+    const namespaceDir = path.join(dir, "plugin", "ai.opencode");
+    fs.mkdirSync(namespaceDir, { recursive: true });
+    fs.chmodSync(namespaceDir, 0o000);
+
+    try {
+      const result = discoverPlugins([dir]);
+      expect(result.plugins[0].problems.map((problem) => problem.message)).toContain(
+        "cannot read ai.opencode/ — client extensions ignored"
+      );
+    } finally {
+      fs.chmodSync(namespaceDir, 0o755);
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("discoverSkils — skills directory escape", () => {
   test("disables skills when the skills directory is a symlink outside the root", () => {
     const dir = makeTempDir();

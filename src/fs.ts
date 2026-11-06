@@ -43,6 +43,15 @@ export function pathExists(p: string): boolean {
   }
 }
 
+/** lstat of `p` (never following the final symlink), or null on failure. */
+export function lstatOrNull(p: string): fs.Stats | null {
+  try {
+    return fs.lstatSync(p);
+  } catch {
+    return null;
+  }
+}
+
 /** Kind of a directory entry after resolving symlinks; null when unreadable. */
 export type EntryKind = "dir" | "file" | "other";
 
