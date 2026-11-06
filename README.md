@@ -159,9 +159,10 @@ This client implements the **portable core** of the spec. Two things stay
 deliberately out of scope:
 
 - `ai.opencode/` — the client-specific extension namespace (JS entry, agents,
-  commands, modes, hooks). A package that ships it still contributes its skills
-  and MCP servers; discovery reports one warning naming the components it did
-  not load, so nothing disappears silently.
+  commands, modes, hooks). A package that ships only those components gets one
+  warning naming them, instead of loading nothing in silence. Packages that
+  also contribute skills or MCP servers stay silent about the unloaded
+  components: they already work. A malformed namespace path is still reported.
 - `agent-plugins/` inside OpenCode config directories and plugin-source
   registration. The client scans the shared roots (`.agents/plugins`) and
   accepts any additional root through `directories`; scanning OpenCode's own

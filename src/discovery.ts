@@ -136,7 +136,8 @@ type PluginLoadResult = { loaded?: DiscoveredPlugin; problems: Problem[] };
 /**
  * Client-specific extension namespace reserved for OpenCode. The spec lets a
  * package carry per-client behavior here; this client implements the portable
- * core only, so those components are reported once instead of vanishing.
+ * core only, so a package that ships only those components is reported
+ * instead of appearing to load and doing nothing.
  */
 const EXTENSION_NAMESPACE = "ai.opencode";
 const EXTENSION_COMPONENTS = new Set([
@@ -148,7 +149,11 @@ const EXTENSION_COMPONENTS = new Set([
   "hooks",
 ]);
 
-function detectUnloadedExtensions(root: string, problems: Problem[]): void {
+function detectUnloadedExtensions(
+  root: string,
+  problems: Problem[],
+  hasPortableComponents: boolean
+): void {
   const namespaceDir = path.join(root, EXTENSION_NAMESPACE);
   if (lstatOrNull(namespaceDir) === null) return;
 
@@ -173,6 +178,12 @@ function detectUnloadedExtensions(root: string, problems: Problem[]): void {
     });
     return;
   }
+  // A package that already contributes skills or MCP servers is partially
+  // loaded, not empty. Reporting the rest would be noise today and a false
+  // alarm once core loads the namespace; only a package that would otherwise
+  // appear to do nothing is worth a warning.
+  if (hasPortableComponents) return;
+
   const present = entries
     .map((entry) => entry.name)
     .filter((name) => EXTENSION_COMPONENTS.has(name))
@@ -181,7 +192,7 @@ function detectUnloadedExtensions(root: string, problems: Problem[]): void {
 
   problems.push({
     level: "warning",
-    message: `${EXTENSION_NAMESPACE}/ ships ${present.join(", ")} — this client loads skills and MCP servers only (see anomalyco/opencode#40993)`,
+    message: `${EXTENSION_NAMESPACE}/ ships ${present.join(", ")} and no loadable skills or MCP servers — this client loads skills and MCP servers only (see anomalyco/opencode#40993)`,
   });
 }
 
@@ -220,7 +231,11 @@ function discoverPlugin(root: string): PluginLoadResult | null {
   const mcpResult = parseMcp(root);
   problems.push(...mcpResult.problems);
 
-  detectUnloadedExtensions(root, problems);
+  detectUnloadedExtensions(
+    root,
+    problems,
+    skillsResult.skills.length > 0 || mcpResult.servers.length > 0
+  );
 
   const manifest: PluginManifest = validated.manifest;
   return {

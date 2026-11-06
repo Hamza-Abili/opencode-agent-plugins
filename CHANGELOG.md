@@ -2,12 +2,15 @@
 
 ## 1.3.0 — unloaded client extensions are reported
 
-- Discovery reports packages that ship `ai.opencode/` client extensions (JS
-  entry, agents, commands, modes, hooks) with one warning naming the components
-  this client does not load, instead of ignoring them silently. The portable
-  half of such a package still loads normally, and an `ai.opencode` entry that
-  escapes the plugin root is reported without being listed.
-- 189 tests (was 183).
+- A package that ships only `ai.opencode/` client extensions (JS entry,
+  agents, commands, modes, hooks) now gets one warning naming the components,
+  instead of loading nothing and saying nothing. Packages that also ship
+  skills or MCP servers stay silent: they already contribute, and the warning
+  would turn into a false alarm once core loads the namespace.
+- The namespace is realpath-contained before it is listed, and only entry
+  names are read: escaping, dangling and unreadable namespaces are reported
+  without being listed.
+- 192 tests (was 183).
 
 ## 1.2.0 — closing the two accepted limitations
 

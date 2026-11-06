@@ -162,22 +162,35 @@ describe("discovery — client extension namespace", () => {
     return dir;
   }
 
-  test("reports ai.opencode components it does not load, and still loads the portable half", () => {
-    const dir = writePackage("with-extensions");
-    writeFile(
-      path.join(dir, "plugin", "skills", "greet", "SKILL.md"),
-      "---\nname: greet\ndescription: Greets\n---\nHi\n"
-    );
+  test("reports a package that ships only ai.opencode components", () => {
+    const dir = writePackage("extensions-only");
     writeFile(path.join(dir, "plugin", "ai.opencode", "plugin.ts"), "export default {}");
     writeFile(path.join(dir, "plugin", "ai.opencode", "agents", "reviewer.md"), "# reviewer");
 
     const result = discoverPlugins([dir]);
     const plugin = result.plugins[0];
-    expect(plugin?.skills.map((skill) => skill.name)).toEqual(["greet"]);
+    expect(plugin?.skills).toEqual([]);
+    expect(plugin?.mcpServers).toEqual([]);
     const warning = plugin?.problems.find((p) => p.message.includes("ai.opencode"));
     expect(warning?.level).toBe("warning");
     expect(warning?.message).toContain("agents, plugin.ts");
+    expect(warning?.message).toContain("no loadable skills or MCP servers");
     expect(warning?.message).toContain("#40993");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("stays silent when the package also contributes portable components", () => {
+    const dir = writePackage("extensions-and-skills");
+    writeFile(
+      path.join(dir, "plugin", "skills", "greet", "SKILL.md"),
+      "---\nname: greet\ndescription: Greets\n---\nHi\n"
+    );
+    writeFile(path.join(dir, "plugin", "ai.opencode", "agents", "reviewer.md"), "# reviewer");
+
+    const result = discoverPlugins([dir]);
+    const plugin = result.plugins[0];
+    expect(plugin?.skills.map((skill) => skill.name)).toEqual(["greet"]);
+    expect(plugin?.problems.some((p) => p.message.includes("ai.opencode"))).toBe(false);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -188,6 +201,24 @@ describe("discovery — client extension namespace", () => {
 
     const result = discoverPlugins([dir]);
     expect(result.plugins[0].problems.some((p) => p.message.includes("ai.opencode"))).toBe(false);
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("stays silent when the package contributes an MCP server", () => {
+    const dir = writePackage("extensions-and-mcp");
+    writeFile(
+      path.join(dir, "plugin", "mcp.json"),
+      JSON.stringify({
+        $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+        mcpServers: { tool: { type: "stdio", command: "node", args: ["server.js"] } },
+      })
+    );
+    writeFile(path.join(dir, "plugin", "ai.opencode", "hooks", "hooks.json"), "{}");
+
+    const result = discoverPlugins([dir]);
+    const plugin = result.plugins[0];
+    expect(plugin?.mcpServers.map((server) => server.name)).toEqual(["tool"]);
+    expect(plugin?.problems.some((p) => p.message.includes("ai.opencode"))).toBe(false);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
@@ -203,6 +234,23 @@ describe("discovery — client extension namespace", () => {
       "ai.opencode entry is not a directory inside the plugin root — client extensions ignored"
     );
     expect(messages.join("\n")).not.toContain("ships");
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("still reports a malformed namespace when the package has skills", () => {
+    const dir = writePackage("escape-and-skill");
+    writeFile(
+      path.join(dir, "plugin", "skills", "greet", "SKILL.md"),
+      "---\nname: greet\ndescription: Greets\n---\nHi\n"
+    );
+    const outside = path.join(dir, "outside");
+    fs.mkdirSync(outside, { recursive: true });
+    fs.symlinkSync(outside, path.join(dir, "plugin", "ai.opencode"), "dir");
+
+    const result = discoverPlugins([dir]);
+    expect(result.plugins[0].problems.map((problem) => problem.message)).toContain(
+      "ai.opencode entry is not a directory inside the plugin root — client extensions ignored"
+    );
     fs.rmSync(dir, { recursive: true, force: true });
   });
 

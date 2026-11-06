@@ -55,9 +55,11 @@ a disable wins. Aliases that resolve to more than one server fail closed.
 7. **No runtime dependencies.** The published package imports only Node/Bun
    built-ins and host-resolved module specifiers.
 8. **Client extensions are reported, never executed.** `ai.opencode/` is not
-   loaded: a package that ships it still contributes its portable components
-   and gets one warning naming what was left behind, and the namespace is
-   contained like every other package path before it is listed.
+   loaded: a package that ships only those components gets one warning naming
+   them, while a package that also contributes skills or MCP servers stays
+   silent about the unloaded components. The namespace is contained like every
+   other package path before it is listed, so a malformed path is still
+   reported.
 
 ## Testing
 
