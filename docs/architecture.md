@@ -40,7 +40,7 @@ src/
 3. **Containment is realpath-based and checked before reads.** `plugin.json`,
    `skills/`, `SKILL.md`, `mcp.json` must resolve inside the plugin root;
    `./` commands must be regular files inside it and are emitted as absolute
-   repaired paths; `cwd` must exist (or is created under `PLUGIN_DATA`) and is emitted as a realpath.
+   resolved paths; `cwd` must exist (or is created under `PLUGIN_DATA`) and is emitted as a realpath.
 4. **MCP servers are opt-in.** The v2 transform always sets `disabled: true`
    unless the user enabled the canonical `<slug>::<server>` id. `enabledMcp` is
 a session seed; explicit enables/disables persist in one versioned value and
@@ -57,7 +57,7 @@ a disable wins. Aliases that resolve to more than one server fail closed.
 
 ## Testing
 
-- `bun test` — 171 unit/regression tests over the core and both adapters,
+- `bun test` — the full unit/regression suite over the core and both adapters,
   including a fake host that reproduces transform replay semantics.
 - `bun run smoke` — live test against an installed OpenCode binary in an
   isolated HOME/XDG environment: verifies a real skill registration and the
