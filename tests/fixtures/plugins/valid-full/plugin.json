@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "demo-tools",
+  "version": "1.2.0",
+  "description": "Demo portable plugin",
+  "author": { "name": "Test Author" },
+  "license": "MIT",
+  "keywords": ["demo"]
+}

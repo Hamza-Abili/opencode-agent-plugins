@@ -1,0 +1,60 @@
+{
+  "name": "@hamzaabili/opencode-agent-plugins",
+  "version": "1.2.0",
+  "description": "OpenCode plugin (v1 and v2): first-class Agent Plugins (agent-plugins.org) client \u2014 auto-discovery, native skills, trust-first MCP (disabled until enabled), marketplace catalogs and npm package sources. Zero runtime dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Hamza-Abili",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "opencode-v1",
+    "opencode-v2",
+    "agent-plugins",
+    "skills",
+    "mcp",
+    "interop",
+    "portability",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hamza-Abili/opencode-agent-plugins.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hamza-Abili/opencode-agent-plugins/issues"
+  },
+  "main": "./index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./legacy": "./src/legacy.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "scripts",
+    "index.ts",
+    "README.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "bun test",
+    "ci": "bun run lint && bun run typecheck && bun run test",
+    "smoke": "bun scripts/smoke.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "bun": ">=1.1.0",
+    "opencode": ">=1.18 <2 || >=2.0"
+  }
+}

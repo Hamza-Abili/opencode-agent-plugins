@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "local-tools": {
+      "type": "stdio",
+      "command": "./bin/server",
+      "args": ["--data", "${PLUGIN_DATA}"],
+      "env": { "TOKEN": "abc" },
+      "cwd": "./"
+    },
+    "remote-tools": {
+      "type": "streamable-http",
+      "url": "https://tools.example.com/mcp",
+      "headers": { "X-Key": "v" }
+    },
+    "legacy-tools": { "type": "sse", "url": "https://tools.example.com/sse" }
+  }
+}
