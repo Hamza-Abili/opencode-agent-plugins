@@ -4,23 +4,26 @@ on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
-  release:
+  verify:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          bun-version: latest
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.3
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: CI (lint + typecheck + tests)
+      - name: Lint, typecheck and test
         run: bun run ci
 
       - name: Tag must match package version
@@ -31,30 +34,38 @@ jobs:
             exit 1
           fi
 
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
       - name: GitHub release
         run: gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::warning::NPM_TOKEN secret is not set - skipping npm publish (add it in Repo Settings -> Secrets and variables -> Actions to enable npm distribution)"
+            echo "::warning::NPM_TOKEN secret is not set - skipping npm publish"
             exit 0
           fi
           version=$(npm pkg get version | tr -d '"')
           name=$(npm pkg get name | tr -d '"')
-          # npm view cannot see versions still staging right after a publish;
-          # a re-push inside that window may attempt (and fail) the publish.
           if npm view "$name@$version" version >/dev/null 2>&1; then
             echo "::notice::$version is already published - skipping npm publish"
             exit 0
           fi
-          npm publish --access public
+          npm publish --ignore-scripts --access public
