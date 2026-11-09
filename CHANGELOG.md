@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 — packaging and discoverability only
+
+- No runtime changes: `src/` and `index.ts` are identical to 1.3.0.
+- Added `homepage` and search keywords (`agent-skills`, `marketplace`,
+  `plugin-manager`) to `package.json`, and a short cross-link section for the
+  other plugins by the same author.
+
 ## 1.3.0 — unloaded client extensions are reported
 
 - A package that ships only `ai.opencode/` client extensions (JS entry,
