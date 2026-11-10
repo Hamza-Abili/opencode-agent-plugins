@@ -187,6 +187,15 @@ Same constraints: MIT, zero runtime dependencies, OpenCode V1 + V2.
 - [opencode-sandbox](https://github.com/Hamza-Abili/opencode-sandbox) — native command sandbox: bubblewrap on Linux, Seatbelt on macOS, fail-closed, network denied by default.
 - [opencode-telegram-notify](https://github.com/Hamza-Abili/opencode-telegram-notify) — Telegram notifications for permission prompts, questions and idle sessions, with tap-only inline buttons.
 
+## Support
+
+- Bugs: [open an issue](https://github.com/Hamza-Abili/opencode-agent-plugins/issues/new/choose)
+  with the matching template and redact secrets or private paths.
+- Setup and design questions: use
+  [Discussions](https://github.com/Hamza-Abili/opencode-agent-plugins/discussions).
+- Security: [private advisory](https://github.com/Hamza-Abili/opencode-agent-plugins/security/advisories/new),
+  never a public issue.
+
 ## Development
 
 ```bash

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or spec discussion
+    url: https://github.com/Hamza-Abili/opencode-agent-plugins/discussions
+    about: Ask for help, share a plugin layout, or discuss an Agent Plugins 1.0 edge case.
+  - name: Security report
+    url: https://github.com/Hamza-Abili/opencode-agent-plugins/security/advisories/new
+    about: Report a trust or containment issue privately. Do not open a public issue.

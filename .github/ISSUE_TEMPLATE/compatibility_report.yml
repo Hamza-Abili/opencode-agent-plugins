@@ -1,0 +1,63 @@
+name: Compatibility report
+description: A spec field, source, skill or MCP case maps differently than documented
+title: "compat: "
+labels: ["compatibility", "needs reproduction"]
+body:
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: "1.3.1"
+    validations:
+      required: true
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode version
+      placeholder: "2.2.6"
+    validations:
+      required: true
+  - type: dropdown
+    id: generation
+    attributes:
+      label: OpenCode generation
+      options:
+        - V2
+        - V1
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Agent Plugins spec version
+      placeholder: "1.0"
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Discovery and precedence
+        - Manifest validation / containment
+        - Native skills
+        - Trust-first MCP registration
+        - Marketplace catalog
+        - npm package source
+        - "/ap install, update or uninstall"
+        - V1 legacy adapter
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Plugin options and manifest
+      description: Redact private repository URLs, tokens and paths you do not want public.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true

@@ -1,0 +1,67 @@
+name: Bug report
+description: Discovery, installation, skills or MCP registration does not work
+title: "bug: "
+labels: ["bug", "needs reproduction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste secrets, private repository URLs with credentials, or full
+        environment dumps. Redact paths and tokens.
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: "1.3.1"
+    validations:
+      required: true
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode version and generation
+      placeholder: "2.2.6 (V2)"
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Plugin source
+      options:
+        - Project .agents/plugins
+        - Global ~/.agents/plugins
+        - XDG data
+        - npm package
+        - Marketplace catalog
+        - Git install (/ap install)
+    validations:
+      required: true
+  - type: textarea
+    id: ap
+    attributes:
+      label: /ap output
+      description: Relevant lines from `/ap list`, `/ap status` or `/ap reload`.
+      render: text
+  - type: textarea
+    id: manifest
+    attributes:
+      label: plugin.json
+      description: Redact private URLs and tokens.
+      render: json
+  - type: textarea
+    id: trace
+    attributes:
+      label: Trace
+      description: Relevant lines from `AGENT_PLUGINS_TRACE=/tmp/ap.log`.
+      render: text
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
