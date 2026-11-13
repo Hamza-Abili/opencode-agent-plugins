@@ -4,9 +4,10 @@
 
 - `upstream-watch` now closes its own compatibility loop: it installs the
   exact new OpenCode version, runs `bun run compat` (CI plus live smoke),
-  opens a docs-only pull request that moves the `tested on X.Y.Z;` README
-  anchor, and comments the evidence. Merging the PR updates the anchor and
-  closes the issue; a failed check leaves it open for the next daily run.
+  and opens a docs-only pull request that moves the `tested on X.Y.Z;` README
+  anchor. The PR body carries the evidence and the manual compatibility
+  checklist; merging it updates the anchor. Only a failed verification or
+  publish opens an issue (one per version, retried daily).
   The anchor never moves backwards.
 
 ## 1.3.1 — packaging and discoverability only
